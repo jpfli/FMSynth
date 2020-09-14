@@ -1,0 +1,16 @@
+
+#pragma once
+
+#include <cstdint>
+
+constexpr std::uint8_t button_a_1bpp[] = {
+8, 8,
+0x3c,
+0x66,
+0xcb,
+0xcb,
+0xc3,
+0xcb,
+0x4a,
+0x3c
+};

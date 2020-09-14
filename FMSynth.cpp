@@ -258,9 +258,6 @@ void FMSynth::_connectUSB() {
             
             gfx.drawFilledRectangle(x, 89, 7 * counter_text.length(), 11, 3);
             gfx.print(counter_text, x, 89, 5);
-            
-            counter_text.replace(0, counter_text.length(), vol);
-            gfx.print(counter_text, x, 101, 5);
         }
     }
     

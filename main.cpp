@@ -5,10 +5,7 @@
 
 #include "pomi/hw/Display.h"
 #include "pomi/Mixer.h"
-#include "pomi/Input.h"
-#include "pomi/Graphics.h"
 #include "FMSynth.h"
-
 #include "FMSource.h"
 
 constexpr std::uint32_t MATCHNUM = 1;

@@ -12,8 +12,6 @@ class FMSynth {
     
     public:
     
-        static inline std::int32_t vol = 0;
-        
         static constexpr std::uint32_t SAMPLERATE = 32000; // 8000, 12000, 16000, 22050, 24000, 32000, 44100, 48000
         
         FMSynth() = delete;

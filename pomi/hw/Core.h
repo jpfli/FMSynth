@@ -25,8 +25,14 @@ class Core {
         
         static inline unsigned int sysTickMillis() {
             volatile unsigned int* SYSTICK = reinterpret_cast<unsigned int*>(0xe000e010);
-            // return ((SYSTICK[1] - SYSTICK[2]) * 699) >> 25; // Divide by 48000 (OSCT = 0)
+            // return (((SYSTICK[1] - SYSTICK[2]) >> 7) * 89478) >> 25; // Divide by 48000 (OSCT = 0)
             return (((SYSTICK[1] - SYSTICK[2]) >> 7) * 59652) >> 25; // Divide by 72000 (OSCT = 2)
+        }
+        
+        static inline unsigned int sysTickMicros() {
+            volatile unsigned int* SYSTICK = reinterpret_cast<unsigned int*>(0xe000e010);
+            // return (((SYSTICK[1] - SYSTICK[2]) >> 7) * 87381) >> 15; // Divide by 48 (OSCT = 0)
+            return (((SYSTICK[1] - SYSTICK[2]) >> 7) * 58254) >> 15; // Divide by 72 (OSCT = 2)
         }
         
         static inline void enableDAC() {

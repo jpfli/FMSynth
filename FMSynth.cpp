@@ -69,6 +69,10 @@ void FMSynth::noteOn(std::int8_t midikey, std::int8_t velocity) {
             }
             idx = idx > 0 ? (idx - 1) : 3;
         } while(idx != orig_idx);
+        
+        if(_voice_idx == orig_idx) {
+            _voice_idx = _voice_idx < 3 ? (_voice_idx + 1) : 0;
+        }
     }
     _voices[_voice_idx].noteOn(_patch, midikey, velocity);
     _sustained_voices[_voice_idx] = false;

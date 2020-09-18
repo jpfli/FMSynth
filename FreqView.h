@@ -116,7 +116,14 @@ class FreqView final: public View {
             
             if(_dirtyflags & _TOPAREA_FLAG) {
                 gfx.drawFilledRectangle(2, 2, 216, 64, _BG_COLOR);
-                View::drawAlgorithm(gfx, FMSynth::patch().algorithm);
+                const FMPatch& patch = FMSynth::patch();
+                
+                View::drawAlgorithm(gfx, patch.algorithm);
+                
+                View::drawHeader(gfx, patch.op[0].pitch.fixed ? "FREQ" : "RATIO", 
+                                      patch.op[1].pitch.fixed ? "FREQ" : "RATIO", 
+                                      patch.op[2].pitch.fixed ? "FREQ" : "RATIO", 
+                                      patch.op[3].pitch.fixed ? "FREQ" : "RATIO");
             }
             
             for(std::uint32_t idx = 0; idx < 4; ++idx) {

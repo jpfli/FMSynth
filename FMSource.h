@@ -123,6 +123,10 @@ class FMSource {
             
             for(std::uint32_t idx = 0; idx < 4; ++idx) {
                 const FMPatch::Operator& op = patch.op[idx];
+                
+                FixedPoint::Fixed<10> op_level(_percentToLevel(op.level));
+                _op_levels_Q10[idx] = op_level.internal();
+                
                 std::int32_t freq_Q15;
                 if(op.pitch.fixed) {
                     freq_Q15 = toFixedFrequency(op.pitch.coarse, op.pitch.fine).internal();
@@ -130,12 +134,10 @@ class FMSource {
                 else {
                     freq_Q15 = (pitch_Q15 * static_cast<uint64_t>(100 * op.pitch.coarse + op.pitch.fine) + 50) / 100;
                 }
+                _op_fixed[idx] = op.pitch.fixed;
+                
                 std::uint64_t rate_Q32 = (static_cast<std::uint64_t>(_RATE_1HZ_Q32) * freq_Q15) >> 15;
-                
                 _op_rates_Q32[idx] = (rate_Q32 * pow2((((op.detune - 50) << 15) + 600) / 1200)) >> 15;
-                
-                FixedPoint::Fixed<10> op_level(_percentToLevel(op.level));
-                _op_levels_Q10[idx] = op_level.internal();
             }
         }
         
@@ -180,22 +182,27 @@ class FMSource {
                 if(_lfo_level_Q20 >= (1<<20)) _lfo_level_Q20 = (1<<20);
             }
             std::int32_t lfo_gain_Q10 = (_lfo_depth_Q10 * _lfo_level_Q20) >> 20;
-            std::int32_t pitch_change_Q15 = (lfo_gain_Q10 * _tri(_lfo_phase_gen.tick())) / (1<<10);
+            std::int32_t lfo_pitch_Q15 = (lfo_gain_Q10 * _tri(_lfo_phase_gen.tick())) / (1<<10);
+            
+            // Pitch ratio for fixed frequency operators
+            std::int32_t pitch_ratio_fixed_Q10 = pow2(lfo_pitch_Q15 + _pitchbend_Q15) >> 5;
             
             // Glide envelope
             if(_glide_level_Q20 > 0) {
                 _glide_level_Q20 -= _glide_att_rate_Q20;
                 if(_glide_level_Q20 <= 0) _glide_level_Q20 = 0;
             }
-            pitch_change_Q15 += (_glide_interval_Q10 * (_glide_level_Q20 >> 5)) / (1<<10);
-            std::int32_t ratio_Q10 = pow2(pitch_change_Q15 + _pitchbend_Q15) >> 5;
+            std::int32_t pitchglide_Q15 = (_glide_interval_Q10 * (_glide_level_Q20 >> 5)) / (1<<10);
+            
+            // Pitch ratio including glide
+            std::int32_t pitch_ratio_glide_Q10 = pow2(lfo_pitch_Q15 + _pitchbend_Q15 + pitchglide_Q15) >> 5;
             
             _master_gain_Q10 = (_volume_Q10 * _master_env_gen.tick()) >> 10;
             _master_gain_Q10 = (_master_gain_Q10 * _master_gain_Q10) >> 10;
             
             std::int32_t env_level_Q10;
             for(std::uint32_t idx = 0; idx < 4; ++idx) {
-                _phase_gens[idx].setRate((_op_rates_Q32[idx] >> 10) * ratio_Q10);
+                _phase_gens[idx].setRate((_op_rates_Q32[idx] >> 10) * (_op_fixed[idx] ? pitch_ratio_fixed_Q10 : pitch_ratio_glide_Q10));
                 
                 // Get current level of operator's enevelope generator
                 env_level_Q10 = _env_gens[idx].tick();
@@ -282,6 +289,7 @@ class FMSource {
         // Operator levels and frequencies
         std::int32_t _op_levels_Q10[4];
         std::uint32_t _op_rates_Q32[4];
+        bool _op_fixed[4];
         
         std::int32_t _op_gains_Q10[4];
         std::int32_t _master_gain_Q10;
